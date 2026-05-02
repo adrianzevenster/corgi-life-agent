@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Cardi the Corgi — Life Advice</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'chat/style.css' %}">
+</head>
+<body>
+<div class="page">
+    <header class="header">
+        <div class="brand">
+            <img class="logo" src="{% static 'chat/corgi.svg' %}" alt="Corgi" />
+            <div>
+                <div class="title">Cindy the Cardigan Welsh Corgi</div>
+                <div class="subtitle">Life advice, corgi-style. Warm. Practical. Loyal. 🐾</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="card">
+            <div id="chat" class="chat"></div>
+
+            <form id="form" class="composer">
+                <input id="msg" class="input" type="text" placeholder="Tell Cardi what’s on your mind…" autocomplete="off" />
+                <button class="btn" type="submit">Boop ➜</button>
+            </form>
+
+            <div class="hint">
+                Tip: try “I’m stressed about exams”, “I had an argument with a friend”, or “Help me plan my week”.
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const msg = document.getElementById("msg");
+
+    function addBubble(text, who) {
+        const b = document.createElement("div");
+        b.className = "bubble " + who;
+        b.textContent = text;
+        chat.appendChild(b);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    addBubble("Hi! I’m Cindy. Big ears, bigger heart. What’s going on? 🐾", "bot");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const text = msg.value.trim();
+        if (!text) return;
+
+        addBubble(text, "user");
+        msg.value = "";
+
+        addBubble("…sniffing the situation…", "bot");
+
+        try {
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message: text})
+            });
+
+            const data = await res.json();
+            // remove “thinking” bubble
+            chat.removeChild(chat.lastChild);
+
+            if (!res.ok) {
+                addBubble("Arf… something went wrong: " + (data.error || "unknown"), "bot");
+                return;
+            }
+
+            addBubble(data.answer, "bot");
+        } catch (err) {
+            chat.removeChild(chat.lastChild);
+            addBubble("Arf… network hiccup. Try again?", "bot");
+        }
+    });
+</script>
+</body>
+</html>
